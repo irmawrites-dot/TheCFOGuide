@@ -1,0 +1,452 @@
+import React, { useEffect, useMemo, useState } from "react";
+
+/**
+ * Apple-style, minimal blog for beginner bookkeepers & small business owners
+ * - Tailwind CSS styling
+ * - Hash-based router (no server config needed)
+ * - SEO basics (JSON-LD), accessibility-first
+ * - Newsletter capture (drop-in action URL)
+ * - AI chatbot placeholder
+ * - Post data inline (replace with CMS/API later)
+ *
+ * Deploy: export default <Site /> in any React runtime. Works on Vercel/Netlify.
+ */
+
+// ----------------------
+// Fake data layer (replace later with CMS or API)
+// ----------------------
+const POSTS = [
+  {
+    slug: "read-your-pl-like-a-pro",
+    title: "How to Read Your P&L Like a Pro (Beginner Guide)",
+    date: "2025-11-12",
+    minutes: 7,
+    tags: ["Foundations", "P&L", "Beginners"],
+    excerpt:
+      "A calm, simple walkthrough of the Profit & Loss so you can see what truly drives profit.",
+    hero:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' x2='1'%3E%3Cstop stop-color='%23f5f5f7'/%3E%3Cstop offset='1' stop-color='%23e5e7eb'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='url(%23g)' width='100%25' height='100%25'/%3E%3C/svg%3E",
+    html: `
+      <p>The Profit & Loss (P&L) shows your revenue, cost of goods sold, operating expenses, and ultimately your net profit. To read it well, follow three passes:</p>
+      <ol>
+        <li><strong>Direction:</strong> Is revenue trending up or down? Compare year-over-year and month-over-month.</li>
+        <li><strong>Drivers:</strong> Check gross margin, then top 3 expense lines (typically payroll, ads, software).</li>
+        <li><strong>Decisions:</strong> Name one actionable change for each: grow revenue, protect margin, control costs.</li>
+      </ol>
+      <h3 class='text-xl font-semibold mt-6 mb-2'>A simple 3-metric dashboard</h3>
+      <ul>
+        <li>Gross Margin %</li>
+        <li>Operating Expense % of Revenue</li>
+        <li>Net Profit %</li>
+      </ul>
+      <p>Track these monthly. If margin drops, drill into product mix and supplier costs. If OpEx % rises, look for subscriptions or ad campaigns to pause.</p>
+    `,
+  },
+  {
+    slug: "kpis-every-small-business-should-track",
+    title: "Top 10 KPIs Every Small Business Should Track",
+    date: "2025-11-12",
+    minutes: 8,
+    tags: ["KPIs", "Dashboards"],
+    excerpt:
+      "From cash runway to customer retention, here are the numbers that matter most.",
+    hero:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' x2='1'%3E%3Cstop stop-color='%23f5f5f7'/%3E%3Cstop offset='1' stop-color='%23ffffff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='url(%23g)' width='100%25' height='100%25'/%3E%3C/svg%3E",
+    html: `
+      <ol>
+        <li><strong>Revenue Growth %</strong></li>
+        <li><strong>Gross Margin %</strong></li>
+        <li><strong>Operating Expense %</strong></li>
+        <li><strong>Net Profit %</strong></li>
+        <li><strong>Cash Runway (months)</strong></li>
+        <li><strong>AR Days / AP Days</strong></li>
+        <li><strong>Customer Acquisition Cost (CAC)</strong></li>
+        <li><strong>Lifetime Value (LTV)</strong></li>
+        <li><strong>Retention / Churn</strong></li>
+        <li><strong>Marketing ROI</strong></li>
+      </ol>
+      <p>Start with a simple rule: measure weekly, decide monthly. Pair each KPI with one owner and one action threshold.</p>
+    `,
+  },
+  {
+    slug: "turn-bookkeeping-into-consulting",
+    title: "From Bookkeeper to Trusted Advisor: A 4-Step Consulting Framework",
+    date: "2025-11-12",
+    minutes: 9,
+    tags: ["Advisory", "Bookkeepers"],
+    excerpt:
+      "How to move beyond reconciliations and deliver decision-ready insights.",
+    hero:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Crect fill='%23f5f5f7' width='100%25' height='100%25'/%3E%3C/svg%3E",
+    html: `
+      <p>Advisory starts with a repeatable conversation cadence and a visual one-page summary.</p>
+      <ol>
+        <li><strong>Diagnose:</strong> Identify 3–5 decision questions the owner cares about.</li>
+        <li><strong>Measure:</strong> Map KPIs and reports to those questions.</li>
+        <li><strong>Explain:</strong> Translate variances into plain language + one chart.</li>
+        <li><strong>Decide:</strong> Propose one experiment for the next 30 days and define success.</li>
+      </ol>
+      <p>Package this as a monthly advisory add-on with a standing 30-minute review.</p>
+    `,
+  },
+  {
+    slug: "cash-flow-forecasting-for-beginners",
+    title: "Cash Flow Forecasting for Beginners (Simple Template)",
+    date: "2025-11-12",
+    minutes: 6,
+    tags: ["Cash Flow", "Templates"],
+    excerpt:
+      "A no-jargon, 30-minute setup that shows cash-in/cash-out and runway.",
+    hero:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Crect fill='%23ffffff' width='100%25' height='100%25'/%3E%3C/svg%3E",
+    html: `
+      <p>Use a 13-week model: list weekly inflows (sales, AR) and outflows (payroll, rent, vendors). Add a starting balance and calculate ending cash.</p>
+      <p>Decisions to consider when runway &lt; 8 weeks: accelerate AR, reduce discretionary spend, renegotiate terms, or bridge with a short-term facility.</p>
+    `,
+  },
+  {
+    slug: "automating-financial-dashboards",
+    title: "Automating Financial Dashboards (QBO/Xero to Sheets/Looker Studio)",
+    date: "2025-11-12",
+    minutes: 10,
+    tags: ["Automation", "Dashboards"],
+    excerpt:
+      "Connect your accounting system to a living dashboard with zero manual updates.",
+    hero:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900'%3E%3Crect fill='%23eef2ff' width='100%25' height='100%25'/%3E%3C/svg%3E",
+    html: `
+      <p>Pipe data from QuickBooks/Xero into Google Sheets via native connectors or tools like G-Accon. Build charts in Looker Studio and schedule refreshes.</p>
+      <p>Start with a single page: Revenue, Gross Margin, OpEx %, Net Profit %, and Cash Runway.</p>
+    `,
+  },
+];
+
+// ----------------------
+// Router (hash-based)
+// ----------------------
+function useHashRoute() {
+  const [hash, setHash] = useState(() => window.location.hash.slice(1) || "/");
+  useEffect(() => {
+    const onHash = () => setHash(window.location.hash.slice(1) || "/");
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+  const push = (path) => (window.location.hash = path);
+  return { path: hash, push };
+}
+
+// ----------------------
+// UI Components
+// ----------------------
+const Container = ({ children }) => (
+  <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">{children}</div>
+);
+
+const Header = ({ push }) => (
+  <header className="sticky top-0 z-40 backdrop-blur border-b border-zinc-200/60 bg-white/70">
+    <Container>
+      <div className="flex items-center justify-between py-4">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-2xl bg-zinc-900" aria-hidden />
+          <button
+            onClick={() => push("/")}
+            className="text-zinc-900 font-semibold tracking-tight text-lg"
+            aria-label="Go to home"
+          >
+            Numbers Made Simple
+          </button>
+        </div>
+        <nav className="hidden md:flex items-center gap-6 text-sm text-zinc-700">
+          <button onClick={() => push("/blog")} className="hover:text-black focus:outline-none focus:underline">
+            Blog
+          </button>
+          <button onClick={() => push("/about")} className="hover:text-black focus:outline-none focus:underline">
+            About
+          </button>
+          <button onClick={() => push("/subscribe")} className="rounded-xl border px-3 py-1.5 hover:bg-zinc-50">
+            Subscribe
+          </button>
+        </nav>
+      </div>
+    </Container>
+  </header>
+);
+
+const Footer = () => (
+  <footer className="mt-24 border-t border-zinc-200/80">
+    <Container>
+      <div className="py-10 text-sm text-zinc-500 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <p>© {new Date().getFullYear()} Numbers Made Simple. All rights reserved.</p>
+        <div className="flex items-center gap-4">
+          <a href="#/privacy" className="hover:text-zinc-700">Privacy</a>
+          <a href="#/terms" className="hover:text-zinc-700">Terms</a>
+        </div>
+      </div>
+    </Container>
+  </footer>
+);
+
+const Hero = ({ push }) => (
+  <section className="relative overflow-hidden">
+    <div className="absolute inset-0 bg-[radial-gradient(1000px_circle_at_20%_-10%,_#e5e7eb_10%,_transparent_50%)]" aria-hidden />
+    <Container>
+      <div className="pt-16 pb-14">
+        <h1 className="text-4xl md:text-6xl font-semibold tracking-tight text-zinc-900">
+          Make sense of your numbers.
+        </h1>
+        <p className="mt-6 max-w-2xl text-zinc-600 text-lg">
+          Calm, minimal guides that turn bookkeeping into clear business decisions — for beginners, bookkeepers, and owners.
+        </p>
+        <div className="mt-8 flex gap-3">
+          <button onClick={() => push("/blog")} className="rounded-2xl bg-zinc-900 text-white px-5 py-3 text-sm font-medium hover:bg-black">
+            Read the blog
+          </button>
+          <button onClick={() => push("/subscribe")} className="rounded-2xl border border-zinc-300 px-5 py-3 text-sm font-medium hover:bg-zinc-50">
+            Get the free KPI kit
+          </button>
+        </div>
+      </div>
+    </Container>
+  </section>
+);
+
+const PostCard = ({ post, push }) => (
+  <article className="group rounded-3xl border border-zinc-200 overflow-hidden bg-white hover:shadow-sm transition-shadow">
+    <img src={post.hero} alt="" className="w-full h-40 object-cover" />
+    <div className="p-6">
+      <div className="text-xs uppercase tracking-wide text-zinc-500">
+        {new Date(post.date).toLocaleDateString()} • {post.minutes} min read
+      </div>
+      <h3 className="mt-2 text-xl font-semibold text-zinc-900 group-hover:underline">
+        <button onClick={() => push(`/post/${post.slug}`)} className="text-left w-full">{post.title}</button>
+      </h3>
+      <p className="mt-2 text-zinc-600">{post.excerpt}</p>
+      <div className="mt-4 flex items-center gap-2">
+        {post.tags.map((t) => (
+          <span key={t} className="text-xs rounded-full bg-zinc-100 px-2 py-1 text-zinc-600">{t}</span>
+        ))}
+      </div>
+    </div>
+  </article>
+);
+
+const SubscribeBlock = () => (
+  <div className="rounded-3xl border border-zinc-200 bg-white p-8">
+    <h3 className="text-2xl font-semibold text-zinc-900">Get the weekly 5‑Minute Finance</h3>
+    <p className="mt-2 text-zinc-600">Short, clear tips to read your financials — plus templates and tutorials.</p>
+    {/* Replace `action` with your Beehiiv/ConvertKit form action URL */}
+    <form action="#" method="post" className="mt-6 flex flex-col sm:flex-row gap-3" onSubmit={(e)=>{e.preventDefault(); alert('Connect your email platform form action to collect emails.')}}>
+      <input
+        type="email"
+        required
+        placeholder="you@company.com"
+        className="flex-1 rounded-xl border border-zinc-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+      />
+      <button className="rounded-xl bg-zinc-900 text-white px-5 py-3 text-sm font-medium hover:bg-black" type="submit">
+        Subscribe
+      </button>
+    </form>
+    <p className="mt-2 text-xs text-zinc-500">No spam. Unsubscribe anytime.</p>
+  </div>
+);
+
+const ChatbotBlock = () => (
+  <div className="rounded-3xl border border-zinc-200 bg-white p-6">
+    <h3 className="text-xl font-semibold text-zinc-900">Ask the AI Advisor</h3>
+    <p className="text-zinc-600 mt-1">Type a question like “Explain gross margin in plain English.” (Placeholder UI)</p>
+    <div className="mt-4 flex gap-2">
+      <input id="aiq" className="flex-1 rounded-xl border px-4 py-3" placeholder="Your question…" />
+      <button
+        className="rounded-xl border px-4 py-3 hover:bg-zinc-50"
+        onClick={() => {
+          const val = document.getElementById("aiq").value.trim();
+          if (!val) return;
+          alert(`AI would answer: ${val}\n\nConnect a chat widget (e.g., Chatbase/Tidio) to power this.`);
+        }}
+      >
+        Ask
+      </button>
+    </div>
+  </div>
+);
+
+// ----------------------
+// Pages
+// ----------------------
+const Home = ({ push }) => (
+  <>
+    <Hero push={push} />
+    <Container>
+      <section className="grid md:grid-cols-3 gap-6 mt-6">
+        {POSTS.slice(0, 3).map((p) => (
+          <PostCard key={p.slug} post={p} push={push} />
+        ))}
+      </section>
+      <section className="mt-12 grid md:grid-cols-3 gap-6">
+        <div className="md:col-span-2"><SubscribeBlock /></div>
+        <ChatbotBlock />
+      </section>
+    </Container>
+  </>
+);
+
+const Blog = ({ push }) => (
+  <Container>
+    <div className="pt-12 pb-4">
+      <h2 className="text-3xl font-semibold text-zinc-900">Latest articles</h2>
+      <p className="text-zinc-600 mt-2">Clear, concise tutorials for beginners and advisors.</p>
+    </div>
+    <div className="grid md:grid-cols-2 gap-6">
+      {POSTS.map((p) => (
+        <PostCard key={p.slug} post={p} push={push} />
+      ))}
+    </div>
+  </Container>
+);
+
+const Post = ({ slug }) => {
+  const post = useMemo(() => POSTS.find((p) => p.slug === slug), [slug]);
+  if (!post) {
+    return (
+      <Container>
+        <div className="py-16">
+          <h2 className="text-2xl font-semibold">Post not found</h2>
+          <p className="text-zinc-600 mt-2">Try going back to the blog.</p>
+        </div>
+      </Container>
+    );
+  }
+  return (
+    <>
+      <section className="border-b border-zinc-200">
+        <Container>
+          <div className="pt-12 pb-10">
+            <p className="text-sm text-zinc-500">{new Date(post.date).toLocaleDateString()} • {post.minutes} min read</p>
+            <h1 className="text-4xl font-semibold text-zinc-900 mt-2">{post.title}</h1>
+            <div className="mt-4 flex items-center gap-2">
+              {post.tags.map((t) => (
+                <span key={t} className="text-xs rounded-full bg-zinc-100 px-2 py-1 text-zinc-600">{t}</span>
+              ))}
+            </div>
+          </div>
+        </Container>
+      </section>
+      <Container>
+        <img src={post.hero} alt="" className="w-full h-64 object-cover rounded-3xl mt-6 border" />
+        <article className="prose prose-zinc max-w-none mt-8" dangerouslySetInnerHTML={{ __html: post.html }} />
+        <div className="mt-10"><SubscribeBlock /></div>
+      </Container>
+    </>
+  );
+};
+
+const About = () => (
+  <Container>
+    <div className="py-14">
+      <h2 className="text-3xl font-semibold text-zinc-900">About</h2>
+      <p className="mt-4 text-zinc-600 max-w-2xl">
+        Numbers Made Simple is an AI-assisted publication that translates financial statements into plain language and practical actions. We design calm guides, visuals, and templates so beginners and busy owners can make decisions in minutes, not hours.
+      </p>
+      <div className="mt-10 grid md:grid-cols-2 gap-6">
+        <SubscribeBlock />
+        <ChatbotBlock />
+      </div>
+    </div>
+  </Container>
+);
+
+const StaticPage = ({ title, body }) => (
+  <Container>
+    <div className="py-14">
+      <h2 className="text-3xl font-semibold text-zinc-900">{title}</h2>
+      <div className="prose prose-zinc mt-4" dangerouslySetInnerHTML={{ __html: body }} />
+    </div>
+  </Container>
+);
+
+// ----------------------
+// App
+// ----------------------
+export default function Site() {
+  const { path, push } = useHashRoute();
+
+  // SEO JSON-LD (update URL and name when you connect a real domain)
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    name: "Numbers Made Simple",
+    url: "https://your-domain.com",
+    description:
+      "Calm, minimal guides that turn bookkeeping into clear business decisions.",
+    inLanguage: "en",
+    publisher: {
+      "@type": "Organization",
+      name: "Numbers Made Simple",
+    },
+  };
+
+  let page = <Home push={push} />;
+  if (path === "/blog") page = <Blog push={push} />;
+  else if (path.startsWith("/post/")) page = <Post slug={path.replace("/post/", "")} />;
+  else if (path === "/about") page = <About />;
+  else if (path === "/subscribe")
+    page = (
+      <Container>
+        <div className="py-14">
+          <h2 className="text-3xl font-semibold text-zinc-900">Subscribe</h2>
+          <p className="mt-2 text-zinc-600">Join 5-Minute Finance — one practical tip each week.</p>
+          <div className="mt-6 max-w-xl"><SubscribeBlock /></div>
+        </div>
+      </Container>
+    );
+  else if (path === "/privacy")
+    page = (
+      <StaticPage
+        title="Privacy Policy"
+        body="<p>We only collect the email address you provide to send you updates. We never sell your data. Unsubscribe anytime via the link in any email.</p>"
+      />
+    );
+  else if (path === "/terms")
+    page = (
+      <StaticPage
+        title="Terms of Use"
+        body="<p>Educational content only. No financial or legal advice. Use templates and guides at your own discretion.</p>"
+      />
+    );
+
+  return (
+    <div className="min-h-screen bg-white text-zinc-900">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <Header push={push} />
+      <main>{page}</main>
+      <Footer />
+    </div>
+  );
+}
+{
+  "name": "numbers-made-simple",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  }
+}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Numbers Made Simple</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/App.jsx"></script>
+  </body>
+</html>
+
